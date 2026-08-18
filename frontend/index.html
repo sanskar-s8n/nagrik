@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAGRIK</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;background:#0f1115;color:#eee;padding:24px}
+    h1{margin:0 0 6px}p{color:#aaa}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:20px}
+    .card{background:#191c22;border:1px solid #2b3038;border-radius:12px;padding:16px}
+    .critical{border-color:#e74c3c}.high{border-color:#f39c12}
+    button{padding:10px 14px;border:0;border-radius:8px;cursor:pointer}
+    pre{white-space:pre-wrap;color:#aaa}
+  </style>
+</head>
+<body>
+  <h1>NAGRIK</h1>
+  <p>AI-assisted Traffic Risk and Emergency Response System</p>
+  <div id="status" class="card">Loading...</div>
+  <div id="locations" class="grid"></div>
+  <script>
+    async function load(){
+      const [health, locations] = await Promise.all([
+        fetch("/api/health").then(r=>r.json()),
+        fetch("/api/locations").then(r=>r.json())
+      ]);
+      document.getElementById("status").textContent =
+        `${health.project} — ${health.status}`;
+      document.getElementById("locations").innerHTML = locations
+        .sort((a,b)=>b.priorityScore-a.priorityScore)
+        .map(l=>`<div class="card ${l.riskLevel.toLowerCase()}">
+          <strong>${l.name}</strong>
+          <p>Risk: ${l.riskScore} (${l.riskLevel})</p>
+          <p>Response gap: ${l.responseGap}</p>
+          <p>Priority: ${l.priorityScore}</p>
+        </div>`).join("");
+    }
+    load().catch(e=>document.getElementById("status").textContent="Unable to connect to NAGRIK");
+  </script>
+</body>
+</html>
